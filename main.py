@@ -85,7 +85,7 @@ def main():
             # Draw current game state
             visualizer.draw_maze(game_state.maze)
             visualizer.draw_pacman(game_state.pacman_pos)
-            for ghost in game_state.ghosts:  # Draw each ghost individually
+            for ghost in game_state.ghosts:
                 visualizer.draw_ghost(ghost)
             visualizer.draw_score(game_state.score)
             visualizer.draw_lives(game_state.lives)

@@ -27,21 +27,16 @@ class GameState:
             [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
         ])
         
-        # Initialize ghosts with different personalities
+        # Initialize ghosts with different personalities and starting positions
         self.ghosts = [
             Ghost((8, 9), 'chase'),    # Red ghost - direct chase
             Ghost((9, 9), 'ambush'),   # Pink ghost - ambush
             Ghost((10, 9), 'patrol'),  # Blue ghost - patrol
         ]
         
-        # Set scatter corners for each ghost
-        self.ghosts[0].set_scatter_corner((1, 1))      # Top-left
-        self.ghosts[1].set_scatter_corner((1, 17))     # Top-right
-        self.ghosts[2].set_scatter_corner((17, 1))     # Bottom-left
-        
         # Game state variables
-        self.pacman_pos = [10, 9]  # Starting position
-        self.last_pacman_pos = [10, 9]
+        self.pacman_pos = [14, 9]  # Starting position moved down
+        self.last_pacman_pos = [14, 9]
         self.lives = 3
         self.score = 0
         self.game_over = False
@@ -67,30 +62,33 @@ class GameState:
 
     def _check_ghost_collisions(self):
         """Check if Pacman collides with any ghost."""
+        pacman_x, pacman_y = self.pacman_pos
         for ghost in self.ghosts:
-            if tuple(self.pacman_pos) == tuple(ghost.position):
+            ghost_x, ghost_y = ghost.position
+            
+            # Print positions for debugging
+            #print(f"Pacman pos: ({pacman_x}, {pacman_y}), Ghost pos: ({ghost_x}, {ghost_y})")
+            
+            # Check if ghost and pacman occupy the same cell
+            if pacman_x == ghost_x and pacman_y == ghost_y:
+                print("Collision detected!")
                 self.lives -= 1
                 if self.lives <= 0:
                     self.game_over = True
+                    print("Game Over - No lives remaining")
                 else:
+                    print(f"Lost a life. Remaining lives: {self.lives}")
                     self._reset_positions()
                 break
 
     def _reset_positions(self):
         """Reset Pacman and ghost positions after losing a life."""
-        self.pacman_pos = [10, 9]
-        self.last_pacman_pos = [10, 9]
-        for i, ghost in enumerate(self.ghosts):
-            ghost.position = [8 + i, 9]
-
-    def _update_scatter_mode(self):
-        """Toggle scatter mode periodically."""
-        self.scatter_timer += 1
-        if self.scatter_timer >= 600:  # Toggle every 10 seconds (60 FPS * 10)
-            self.scatter_mode = not self.scatter_mode
-            for ghost in self.ghosts:
-                ghost.scatter_mode = self.scatter_mode
-            self.scatter_timer = 0
+        self.pacman_pos = [14, 9]  # Moved down
+        self.last_pacman_pos = [14, 9]
+        # Reset ghosts to their starting positions
+        positions = [(8, 9), (9, 9), (10, 9)]
+        for ghost, pos in zip(self.ghosts, positions):
+            ghost.position = list(pos)
 
     def get_pacman_direction(self) -> tuple:
         """Get Pacman's current direction based on last movement."""
@@ -126,3 +124,12 @@ class GameState:
     def _count_food(self):
         """Count the total number of food pellets and power pellets in the maze."""
         return np.sum(self.maze == FOOD) + np.sum(self.maze == POWER_PELLET)
+
+    def _update_scatter_mode(self):
+        """Toggle scatter mode periodically."""
+        self.scatter_timer += 1
+        if self.scatter_timer >= 600:  # Toggle every 10 seconds (60 FPS * 10)
+            self.scatter_mode = not self.scatter_mode
+            for ghost in self.ghosts:
+                ghost.scatter_mode = self.scatter_mode
+            self.scatter_timer = 0
