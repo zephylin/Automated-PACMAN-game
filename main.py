@@ -40,14 +40,19 @@ def show_game_over_screen(visualizer, score, is_win=True):
 
 def main():
     running = True
+    current_algorithm = 'A*'  # Default algorithm
     
     while running:
         # Initialize game state, visualizer, and agent
         game_state = GameState()
         visualizer = GameVisualizer()
+        visualizer.set_game_state(game_state)
         pacman_agent = PacmanAgent(game_state)
         game_running = True
         last_move_time = time.time()
+
+        # Font for algorithm display
+        font = pygame.font.Font(None, 36)
 
         while game_running:
             # Handle events
@@ -59,8 +64,20 @@ def main():
                     if event.key == pygame.K_ESCAPE:
                         game_running = False
                         running = False
-                    elif event.key == pygame.K_p:  # Add pause functionality
+                    elif event.key == pygame.K_p:  # Pause
                         time.sleep(0.5)
+                    elif event.key == pygame.K_a:  # Switch to A*
+                        current_algorithm = 'A*'
+                        pacman_agent.algorithm = 'A*'
+                        pacman_agent.current_path = []  # Reset path
+                    elif event.key == pygame.K_b:  # Switch to BFS
+                        current_algorithm = 'BFS'
+                        pacman_agent.algorithm = 'BFS'
+                        pacman_agent.current_path = []  # Reset path
+                    elif event.key == pygame.K_d:  # Switch to DFS
+                        current_algorithm = 'DFS'
+                        pacman_agent.algorithm = 'DFS'
+                        pacman_agent.current_path = []  # Reset path
 
             # Update PACMAN position based on AI agent's decision
             current_time = time.time()
@@ -84,11 +101,25 @@ def main():
 
             # Draw current game state
             visualizer.draw_maze(game_state.maze)
+            
+            # Draw explored nodes and path if available
+            if hasattr(pacman_agent, 'explored_nodes') and pacman_agent.explored_nodes:
+                visualizer.draw_path_exploration(
+                    pacman_agent.explored_nodes,
+                    pacman_agent.current_path,
+                    current_algorithm
+                )
+            
             visualizer.draw_pacman(game_state.pacman_pos)
             for ghost in game_state.ghosts:
                 visualizer.draw_ghost(ghost)
             visualizer.draw_score(game_state.score)
             visualizer.draw_lives(game_state.lives)
+            
+            # Draw current algorithm
+            algo_text = font.render(f"Algorithm: {current_algorithm}", True, WHITE)
+            visualizer.screen.blit(algo_text, (10, 10))
+            
             visualizer.update_display()
 
         # Show end game screen and check if player wants to restart

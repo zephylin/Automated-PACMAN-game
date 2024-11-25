@@ -1,3 +1,5 @@
+
+# game_state.py
 import numpy as np
 from .ghost import Ghost
 from .constants import *
@@ -35,7 +37,7 @@ class GameState:
         ]
         
         # Game state variables
-        self.pacman_pos = [14, 9]  # Starting position moved down
+        self.pacman_pos = [14, 9]  # Starting position
         self.last_pacman_pos = [14, 9]
         self.lives = 3
         self.score = 0
@@ -43,6 +45,11 @@ class GameState:
         self.remaining_food = self._count_food()
         self.scatter_mode = False
         self.scatter_timer = 0
+        
+        # Add visualization tracking
+        self.current_algorithm = 'A*'
+        self.explored_nodes = []
+        self.current_path = []
 
     def update(self):
         """Update game state including ghost positions and check collisions."""
@@ -66,26 +73,18 @@ class GameState:
         for ghost in self.ghosts:
             ghost_x, ghost_y = ghost.position
             
-            # Print positions for debugging
-            #print(f"Pacman pos: ({pacman_x}, {pacman_y}), Ghost pos: ({ghost_x}, {ghost_y})")
-            
-            # Check if ghost and pacman occupy the same cell
             if pacman_x == ghost_x and pacman_y == ghost_y:
-                print("Collision detected!")
                 self.lives -= 1
                 if self.lives <= 0:
                     self.game_over = True
-                    print("Game Over - No lives remaining")
                 else:
-                    print(f"Lost a life. Remaining lives: {self.lives}")
                     self._reset_positions()
                 break
 
     def _reset_positions(self):
         """Reset Pacman and ghost positions after losing a life."""
-        self.pacman_pos = [14, 9]  # Moved down
+        self.pacman_pos = [14, 9]
         self.last_pacman_pos = [14, 9]
-        # Reset ghosts to their starting positions
         positions = [(8, 9), (9, 9), (10, 9)]
         for ghost, pos in zip(self.ghosts, positions):
             ghost.position = list(pos)
@@ -128,8 +127,14 @@ class GameState:
     def _update_scatter_mode(self):
         """Toggle scatter mode periodically."""
         self.scatter_timer += 1
-        if self.scatter_timer >= 600:  # Toggle every 10 seconds (60 FPS * 10)
+        if self.scatter_timer >= 600:  # Toggle every 10 seconds
             self.scatter_mode = not self.scatter_mode
             for ghost in self.ghosts:
                 ghost.scatter_mode = self.scatter_mode
             self.scatter_timer = 0
+
+    def change_algorithm(self, algorithm: str):
+        """Change the current pathfinding algorithm."""
+        self.current_algorithm = algorithm
+        self.current_path = []  # Reset path to force recalculation
+        self.explored_nodes = []  # Reset exploration visualization

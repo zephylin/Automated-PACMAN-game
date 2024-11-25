@@ -1,3 +1,4 @@
+# src/pacman_agent.py
 from typing import Tuple, List
 from .search import SearchAlgorithms
 from .constants import *
@@ -8,6 +9,8 @@ class PacmanAgent:
         self.search_algorithms = SearchAlgorithms(game_state.maze)
         self.current_path = []
         self.current_target = None
+        self.algorithm = 'A*'  # Default algorithm
+        self.explored_nodes = []
     
     def get_food_positions(self) -> List[Tuple[int, int]]:
         """Get positions of all food pellets and power pellets."""
@@ -23,15 +26,14 @@ class PacmanAgent:
         danger = 0
         for ghost in self.game_state.ghosts:
             distance = abs(pos[0] - ghost.position[0]) + abs(pos[1] - ghost.position[1])
-            # Reduced danger values to prevent getting stuck
             if distance < 2:
                 danger += 1.0
             elif distance < 3:
                 danger += 0.5
         return danger
-        
+
     def get_next_move(self) -> Tuple[int, int]:
-        """Determine next move considering both food and ghost positions."""
+        """Determine next move using selected algorithm."""
         current_pos = tuple(self.game_state.pacman_pos)
         
         # If we need a new path
@@ -53,11 +55,19 @@ class PacmanAgent:
                 score = dist + danger
                 
                 if score < best_score:
-                    path = self.search_algorithms.a_star(current_pos, food)
+                    # Use selected algorithm
+                    if self.algorithm == 'BFS':
+                        path, explored = self.search_algorithms.bfs(current_pos, food)
+                    elif self.algorithm == 'DFS':
+                        path, explored = self.search_algorithms.dfs(current_pos, food)
+                    else:  # A*
+                        path, explored = self.search_algorithms.a_star(current_pos, food)
+                        
                     if path:
                         best_score = score
                         best_path = path
                         best_target = food
+                        self.explored_nodes = explored
             
             if best_path:
                 self.current_path = best_path
@@ -70,3 +80,6 @@ class PacmanAgent:
             return (next_pos[0] - current_pos[0], next_pos[1] - current_pos[1])
             
         return (0, 0)  # No valid move found
+
+# Make sure PacmanAgent is explicitly exported
+__all__ = ['PacmanAgent']

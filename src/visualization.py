@@ -1,12 +1,18 @@
 import pygame
+from typing import List, Tuple
 from .constants import *
 
 class GameVisualizer:
     def __init__(self):
         pygame.init()
-        self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+        self._screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
         pygame.display.set_caption('AI PACMAN')
         self.clock = pygame.time.Clock()
+        self.game_state = None  # Add this line
+
+    def set_game_state(self, game_state):
+        """Set the current game state for visualization."""
+        self.game_state = game_state
 
     def draw_maze(self, maze):
         """Draw the maze with walls, food pellets, and power pellets."""
@@ -67,6 +73,40 @@ class GameVisualizer:
         font = pygame.font.Font(None, 36)
         score_text = font.render(f'Score: {score}', True, WHITE)
         self.screen.blit(score_text, (WINDOW_WIDTH - 150, WINDOW_HEIGHT - 30))
+
+    def draw_path_exploration(self, explored_nodes: List[Tuple[int, int]], final_path: List[Tuple[int, int]], algorithm_name: str):
+        """Visualize how different algorithms explore paths."""
+        # Colors for different algorithms
+        colors = {
+            'BFS': (100, 100, 255),  # Light blue for BFS exploration
+            'DFS': (255, 100, 100),  # Light red for DFS exploration
+            'A*': (100, 255, 100)    # Light green for A* exploration
+        }
+        
+        # Draw all explored nodes with small circles
+        color = colors.get(algorithm_name, (255, 255, 255))  # Default to white if algorithm not found
+        for node in explored_nodes:
+            x = node[1] * CELL_SIZE + CELL_SIZE//2
+            y = node[0] * CELL_SIZE + CELL_SIZE//2
+            pygame.draw.circle(self.screen, color, (x, y), 2)  # Small dots for explored nodes
+        
+        # Draw final path with lines if it exists
+        if final_path:
+            # Start from Pacman's position
+            start_pos = self.game_state.pacman_pos
+            path_with_start = [start_pos] + final_path
+            
+            for i in range(len(path_with_start) - 1):
+                start_x = path_with_start[i][1] * CELL_SIZE + CELL_SIZE//2
+                start_y = path_with_start[i][0] * CELL_SIZE + CELL_SIZE//2
+                end_x = path_with_start[i+1][1] * CELL_SIZE + CELL_SIZE//2
+                end_y = path_with_start[i+1][0] * CELL_SIZE + CELL_SIZE//2
+                pygame.draw.line(self.screen, YELLOW, (start_x, start_y), (end_x, end_y), 2)
+        
+        # Draw algorithm name
+        font = pygame.font.Font(None, 24)
+        text = font.render(f'Algorithm: {algorithm_name}', True, WHITE)
+        self.screen.blit(text, (10, WINDOW_HEIGHT - 30))
 
     def update_display(self):
         """Update the display."""

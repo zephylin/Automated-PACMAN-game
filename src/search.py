@@ -1,3 +1,4 @@
+# search.py
 from collections import deque
 from queue import PriorityQueue
 from typing import List, Tuple, Dict, Set
@@ -21,25 +22,24 @@ class SearchAlgorithms:
                 moves.append((new_x, new_y))
         return moves
 
-    def bfs(self, start: Tuple[int, int], goal: Tuple[int, int]) -> List[Tuple[int, int]]:
-        """
-        Breadth-First Search implementation.
-        Returns the shortest path from start to goal.
-        """
-        # Initialize the queue and visited set
+    def manhattan_distance(self, pos1: Tuple[int, int], pos2: Tuple[int, int]) -> int:
+        """Calculate Manhattan distance between two positions."""
+        return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
+
+    def bfs(self, start: Tuple[int, int], goal: Tuple[int, int]) -> Tuple[List[Tuple[int, int]], List[Tuple[int, int]]]:
+        """BFS implementation that returns both path and explored nodes."""
         queue = deque([[start]])
         visited = {start}
+        explored_nodes = []
         
         while queue:
-            # Get the current path
             path = queue.popleft()
             current = path[-1]
+            explored_nodes.append(current)
             
-            # Check if we've reached the goal
             if current == goal:
-                return path[1:]  # Exclude the start position
+                return path[1:], explored_nodes
             
-            # Explore neighbors
             for next_pos in self.get_legal_moves(current):
                 if next_pos not in visited:
                     visited.add(next_pos)
@@ -47,28 +47,51 @@ class SearchAlgorithms:
                     new_path.append(next_pos)
                     queue.append(new_path)
         
-        return []  # No path found
+        return [], explored_nodes
 
-    def manhattan_distance(self, pos1: Tuple[int, int], pos2: Tuple[int, int]) -> int:
-        """Calculate Manhattan distance between two positions."""
-        return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
+    def dfs(self, start: Tuple[int, int], goal: Tuple[int, int]) -> Tuple[List[Tuple[int, int]], List[Tuple[int, int]]]:
+        """DFS implementation that returns both path and explored nodes."""
+        stack = [[start]]
+        visited = {start}
+        explored_nodes = []
+        
+        while stack:
+            path = stack.pop()
+            current = path[-1]
+            explored_nodes.append(current)
+            
+            if current == goal:
+                return path[1:], explored_nodes
+            
+            for next_pos in reversed(self.get_legal_moves(current)):
+                if next_pos not in visited:
+                    visited.add(next_pos)
+                    new_path = list(path)
+                    new_path.append(next_pos)
+                    stack.append(new_path)
+        
+        return [], explored_nodes
 
-    def a_star(self, start: Tuple[int, int], goal: Tuple[int, int]) -> List[Tuple[int, int]]:
-        """
-        A* Search implementation.
-        Returns the optimal path from start to goal using Manhattan distance heuristic.
-        """
-        # Initialize the priority queue and tracking dictionaries
+    def a_star(self, start: Tuple[int, int], goal: Tuple[int, int]) -> Tuple[List[Tuple[int, int]], List[Tuple[int, int]]]:
+        """A* implementation that returns both path and explored nodes."""
         frontier = PriorityQueue()
         frontier.put((0, start))
         came_from = {start: None}
         cost_so_far = {start: 0}
+        explored_nodes = []
         
         while not frontier.empty():
             current = frontier.get()[1]
+            explored_nodes.append(current)
             
             if current == goal:
-                break
+                # Reconstruct path
+                path = []
+                while current != start:
+                    path.append(current)
+                    current = came_from[current]
+                path.reverse()
+                return path, explored_nodes
                 
             for next_pos in self.get_legal_moves(current):
                 new_cost = cost_so_far[current] + 1
@@ -79,39 +102,4 @@ class SearchAlgorithms:
                     frontier.put((priority, next_pos))
                     came_from[next_pos] = current
         
-        # Reconstruct path
-        if goal not in came_from:
-            return []
-            
-        path = []
-        current = goal
-        while current != start:
-            path.append(current)
-            current = came_from[current]
-        path.reverse()
-        return path
-
-    def find_nearest_target(self, start: Tuple[int, int], targets: List[Tuple[int, int]], 
-                          use_bfs: bool = False) -> Tuple[List[Tuple[int, int]], Tuple[int, int]]:
-        """
-        Find the nearest target position and the path to reach it.
-        targets: List of target positions (e.g., food pellets)
-        use_bfs: If True, uses BFS; if False, uses A*
-        Returns: (path_to_target, target_position)
-        """
-        nearest_path = []
-        nearest_target = None
-        min_distance = float('inf')
-        
-        for target in targets:
-            # Use Manhattan distance for initial filtering
-            dist = self.manhattan_distance(start, target)
-            if dist < min_distance:
-                # Find actual path using selected algorithm
-                path = self.bfs(start, target) if use_bfs else self.a_star(start, target)
-                if path and len(path) < min_distance:
-                    min_distance = len(path)
-                    nearest_path = path
-                    nearest_target = target
-                    
-        return nearest_path, nearest_target
+        return [], explored_nodes
